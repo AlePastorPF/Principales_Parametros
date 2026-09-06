@@ -260,6 +260,19 @@
       </div>
     </div>
     <div class="field">
+      <label>Partido</label>
+      <div class="multiselect" id="matchFilter">
+        <button type="button" class="ms-btn" id="matchBtn">Todos los partidos</button>
+        <div class="ms-panel" id="matchPanel">
+          <div class="ms-actions">
+            <button type="button" data-act="all">Seleccionar todos</button>
+            <button type="button" data-act="none">Limpiar</button>
+          </div>
+          <div class="ms-list" id="matchList"></div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
       <label for="metricSelect">Métrica</label>
       <select id="metricSelect"></select>
     </div>
@@ -345,7 +358,11 @@ const allPositions = POSITION_ORDER.filter(pos => Object.values(playerPosition).
 Object.values(playerPosition).forEach(pos=>{ if(!allPositions.includes(pos)) allPositions.push(pos); });
 
 // ---- State: empty Set = "todos" (sin filtro) ----
-let state = { players: new Set(), positions: new Set(), metric: "avgBiG" };
+let state = { players: new Set(), positions: new Set(), partidos: new Set(), metric: "avgBiG" };
+
+function activePartidos(){
+  return state.partidos.size === 0 ? partidoOrder : partidoOrder.filter(pk => state.partidos.has(pk));
+}
 
 // ---- Metric select ----
 const metricSelect = document.getElementById('metricSelect');
@@ -443,6 +460,14 @@ setupMultiSelect({
   onChange: ()=>{ render(); }
 });
 
+setupMultiSelect({
+  rootId:'matchFilter', btnId:'matchBtn', listId:'matchList',
+  items: partidoOrder, selectedSet: state.partidos,
+  allBtnLabel: 'Todos los partidos',
+  itemLabel: (pk)=>DATA.matches[pk].rival,
+  onChange: ()=>{ render(); }
+});
+
 // If a position filter removes players that were individually selected, drop them
 function pruneInvalidPlayerSelection(){
   if(state.positions.size === 0 || state.players.size === 0) return;
@@ -491,10 +516,10 @@ function selectionLabel(){
     (state.positions.size === 1 ? [...state.positions][0] : state.positions.size + ' puestos');
   const playerPart = state.players.size === 0 ? null :
     (state.players.size === 1 ? [...state.players][0] : state.players.size + ' jugadores');
-  if(playerPart && posPart) return `${playerPart} · ${posPart}`;
-  if(playerPart) return playerPart;
-  if(posPart) return posPart;
-  return 'Equipo completo';
+  const matchPart = state.partidos.size === 0 ? null :
+    (state.partidos.size === 1 ? DATA.matches[[...state.partidos][0]].rival : state.partidos.size + ' partidos');
+  const parts = [playerPart, posPart, matchPart].filter(Boolean);
+  return parts.length ? parts.join(' · ') : 'Equipo completo';
 }
 
 function mmss(totalSeconds){
@@ -532,7 +557,8 @@ function render(){
 
 function renderSummary(){
   const metric = METRICS[state.metric];
-  const vals = partidoOrder.map(pk => valueForSelection(pk, state.metric)).filter(v=>v!==null && v!==undefined);
+  const matches = activePartidos();
+  const vals = matches.map(pk => valueForSelection(pk, state.metric)).filter(v=>v!==null && v!==undefined);
   const box = document.getElementById('summaryCards');
 
   if(vals.length === 0){
@@ -543,8 +569,8 @@ function renderSummary(){
   const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
   const max = Math.max(...vals);
   const min = Math.min(...vals);
-  const maxIdx = partidoOrder.filter(pk => valueForSelection(pk, state.metric) === max)[0];
-  const minIdx = partidoOrder.filter(pk => valueForSelection(pk, state.metric) === min)[0];
+  const maxIdx = matches.filter(pk => valueForSelection(pk, state.metric) === max)[0];
+  const minIdx = matches.filter(pk => valueForSelection(pk, state.metric) === min)[0];
 
   const who = selectionLabel();
 
@@ -556,7 +582,7 @@ function renderSummary(){
     </div>
     <div class="card">
       <div class="label">Partidos con registro</div>
-      <div class="value">${vals.length}/${partidoOrder.length}</div>
+      <div class="value">${vals.length}/${matches.length}</div>
       <div class="sub">de la temporada 2026</div>
     </div>
     <div class="card">
@@ -576,7 +602,8 @@ function renderChart(){
   const metric = METRICS[state.metric];
   document.getElementById('chartTitle').textContent = `${selectionLabel()} — ${metric.label}`;
 
-  const rows = partidoOrder.map(pk => ({
+  const matches = activePartidos();
+  const rows = matches.map(pk => ({
     key: pk,
     rival: DATA.matches[pk].rival,
     logo: DATA.matches[pk].logo,
@@ -718,9 +745,10 @@ function renderBoard(){
     state.metric === "avgBiG" ? "Prom. BiG (s)" : (state.metric === "durTotal" ? "Duración total" : `Total ${metric.short}`);
 
   const pool = eligiblePlayers();
+  const matches = activePartidos();
   const results = pool.map(p=>{
     let vals = [];
-    partidoOrder.forEach(pk=>{
+    matches.forEach(pk=>{
       const row = getPlayerRowInMatch(pk, p);
       if(row && row[state.metric] !== null && row[state.metric] !== undefined){
         vals.push(row[state.metric]);
