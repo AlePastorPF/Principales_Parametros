@@ -10,6 +10,7 @@
   "SIC_Champagnat":  { "logo": "Champagnat",   "rival": "Champagnat" },
   "SIC_Champagnat_2":{ "logo": "Champagnat",   "rival": "Champagnat (V2)" },
   "SIC_CRBV":        { "logo": "CRBV",         "rival": "CRBV" },
+  "SIC_CRBV_2":      { "logo": "CRBV",         "rival": "CRBV (V2)" },
   "SIC_CUBA":        { "logo": "CUBA",         "rival": "CUBA" },
   "SIC_Hindu":       { "logo": "Hindu",        "rival": "Hindu" },
   "SIC_Hindu_2":     { "logo": "Hindu",        "rival": "Hindu (V2)" },
@@ -19,5 +20,6 @@
   "SIC_LT":          { "logo": "Los_Tilos",    "rival": "Los Tilos" },
   "SIC_Newman":      { "logo": "Newman",       "rival": "Newman" },
   "SIC_Newman_2":    { "logo": "Newman",       "rival": "Newman (V2)" },
-  "SIC_Plaza":       { "logo": "Plaza",        "rival": "Plaza" }
+  "SIC_Plaza":       { "logo": "Plaza",        "rival": "Plaza" },
+  "SIC_Plaza_2":     { "logo": "Plaza",        "rival": "Plaza (V2)" }
 }
